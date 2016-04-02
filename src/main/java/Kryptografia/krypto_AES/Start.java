@@ -7,7 +7,7 @@ package Kryptografia.krypto_AES;
 public class Start 
 {
 	private  int Nb = 4, Nk, Nr;   
-	
+	private  byte[][] mainKey; 
 	
     public static void main( String[] args )
     {
@@ -15,9 +15,64 @@ public class Start
         mainPanel.setVisible(true);
     }
     
+    
+    
+    public  byte[] encode(byte[] message, byte[] key) //throws AESException
+    {
+    	// Nk= wielkosc klucza/4
+        Nk = key.length/4; 
+        //Nr= ilosc rund ?
+        Nr = Nk + 6;
+        //if(message.length==0)throw new AESException("Podaj dane do szyfrowania");
+        //tu jakos obsluzymy wlasny wyjatek
+        
+        //len to ilosc bloków *16 uzywana do inicjalizacji tablic bajtowych
+        // np len = 1 (blok) * 16 = inicjujemy tablice new byte[16] - czyli tablice 128 bitów;
+        int len;
+        
+        //Sprawdzamy czy bajty tekstu da sie podzielic na rowne 128 bitowe bloki   
+        int pom=message.length/16;
+        //Jesli pom (ilosc blokow) jest = 0 to len=16 bo to są bity później przy inicjalizajci tablicy
+        //a musi byc co najmniej 16bajtów żeby miec jeden blok 128 bitowy bo byte=bajt --> 16*8=128
+        if (pom==0) len=16;
+        //jesli tekst%16 !=0 (czyli nie da sie stworzyc rownych 128 bitowych bloków) to dodajemy 
+        //1 do pom bo int zaokrangla w dół i mnozymy *16. Dzięki temu mamy naszą liczbe bloków 128 bitowych
+        else if ((message.length % 16) != 0)
+        len=(pom+1)*16;
+        //jesli tekst%16==0 to mnozymy *16 i mamy liczbe bloków
+        else len=pom*16;
+        //result - zakodowane znaczki
+        //temp - tymczasowa tablica z naszym tekstem ezentualnie uzupełniona zerami
+        byte[] result = new byte[len];	
+        byte[] temp = new byte[len];
+        //blok tekstu 128 bitów.
+        byte[] blok = new byte[16];		
+        
+        mainKey = generateKey(key);
+        
+        //wpisujemy widomosc do tempa i uzupelniamy reszte zerami 
+        for (int i = 0; i < len;i++) 
+        { if(i<message.length) temp[i]=message[i];
+          else temp[i]=0;
+        }
+        
+        //dzielimy tempa na bloki, wybierami pierwszy blok. blok wrzucamy w encrypt i potem wrzucamy 
+        //na pierwsze 16 miejsc tablicy result. potem tak wkółko az do końca
+        for (int k = 0; k < temp.length;) 
+        {
+            for (int j=0;j<16;j++) blok[j]=temp[k++];
+            //blok = encrypt(blok);
+            System.arraycopy(blok, 0, result,k-16, blok.length);
 
+        }
+        return result;
+}
+    
     public byte[][] generateKey(byte[] key) 
     {
+    	//generujemy 60 32bitowych kluczy jak klucz jest 265 bitowy [klucz moze byc tez 192/128 bitowy)
+    	//tutaj uzupelniamy tylko czesc klucza. klucz jest dalej uzupelniany w metodzie encrypt
+    	//Bb=4, Nr-ilosc rund +1
         byte[][] temp = new byte[Nb * (Nr+1)][4];
         int i = 0;
         int j =0;
@@ -32,6 +87,107 @@ public class Start
         }
         return temp;
     }
+    
+    public  byte[] encrypt(byte[] in) 
+    {
+        byte[] tmp = new byte[in.length];
+        byte[][] state = new byte[4][4];
+        for (int i = 0; i < in.length; i++)
+            state[i / 4][i % 4] = in[i];
+        
+        //pierwsza runda, potem rundy posrednie i funda finałowa
+        // po kazdej rundzie powstaje szyfr posredni zwany stanem (state) 
+        
+        //runda pierwsza inicjalizująca:
+        state = addRoundKey(state, mainKey, 0);
+        
+        //rundy posrednie
+        for (int round = 1; round < Nr; round++) 
+        {
+            state = subBytes(state);
+            state = shiftRows(state);
+            state = mixColumns(state);
+            state = addRoundKey(state, mainKey, round);
+        }
+        
+        //runda finałowa
+        state = subBytes(state);
+        state = shiftRows(state);
+        state = addRoundKey(state, mainKey, Nr);
+        
+        
+        for (int i = 0; i < tmp.length; i++)
+            tmp[i] = state[i / 4][i%4];
+        return tmp;
+}
+    
+   
+	
+    
+    private byte[][] addRoundKey(byte[][] state, byte[][] w, int round) 
+    {
+    	//tablica 16x4
+        byte[][] tmp = new byte[state.length][state[0].length];
+        for (int c = 0; c < Nb; c++) 
+        {
+            for (int l = 0; l < 4; l++)
+                tmp[l][c] = (byte) (state[l][c] ^ w[round * Nb + c][l]);
+        }
+        return tmp;
+}
+    private byte[][] subBytes(byte[][] state) 
+    {
+        byte[][] temp = new byte[state.length][state[0].length];
+        for (int row = 0; row < 4; row++)
+            for (int col = 0; col < Nb; col++)
+                temp[row][col] = (byte) (sbox[(state[row][col] & 0xff)]);
+        return temp;
+}
+    
+	private byte[][] shiftRows(byte[][] state) 
+    {
+        byte[] t = new byte[4];
+        for (int r = 1; r < 4; r++) 
+        {
+            for (int c = 0; c < Nb; c++)
+                t[c] = state[r][(c + r) % Nb];
+                for (int c = 0; c < Nb; c++)
+                    state[r][c] = t[c];
+        }
+        return state;
+}
+	
+	private  byte[][] mixColumns(byte[][] s)
+    {
+      int[] sp = new int[4];
+      byte b02 = (byte)0x02, b03 = (byte)0x03;
+      for (int c = 0; c < 4; c++) 
+      {
+         sp[0] = fMul(b02, s[0][c]) ^ fMul(b03, s[1][c]) ^ s[2][c]  ^ s[3][c];
+         sp[1] = s[0][c]  ^ fMul(b02, s[1][c]) ^ fMul(b03, s[2][c]) ^ s[3][c];
+         sp[2] = s[0][c]  ^ s[1][c]  ^ fMul(b02, s[2][c]) ^ fMul(b03, s[3][c]);
+         sp[3] = fMul(b03, s[0][c]) ^ s[1][c]  ^ s[2][c]  ^ fMul(b02, s[3][c]);
+         for (int i = 0; i < 4; i++) s[i][c] = (byte)(sp[i]);
+      }
+      return s;
+}
+	
+	public  byte fMul(byte a, byte b) 
+    {
+        byte aa = a, bb = b, r = 0, t;
+        while (aa != 0) 
+        {
+            if ((aa & 1) != 0)
+                r = (byte) (r ^ bb);
+            t = (byte) (bb & 0x20);
+            bb = (byte) (bb << 1);
+            if (t != 0)
+                bb = (byte) (bb ^ 0x1b);
+            aa = (byte) ((aa & 0xff) >> 1);
+        }
+        return r;
+}
+	
     
 	private  int[] sbox = { 0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F,
 			0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76, 0xCA, 0x82,
