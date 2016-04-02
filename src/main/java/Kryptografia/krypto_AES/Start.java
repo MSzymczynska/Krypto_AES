@@ -6,6 +6,7 @@ package Kryptografia.krypto_AES;
  */
 public class Start 
 {
+	//zmienna Nb tak bardzo potrzebna ;)
 	private  int Nb = 4, Nk, Nr;   
 	private  byte[][] mainKey; 
 	
