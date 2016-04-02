@@ -1,23 +1,16 @@
 package Kryptografia.krypto_AES;
 
-/**
- * Hello world!
- *
- */
-public class Start 
-{
-	//zmienna Nb tak bardzo potrzebna ;)
+
+public class Start {
 	private  int Nb = 4, Nk, Nr;   
 	private  byte[][] mainKey; 
 	
-    public static void main( String[] args )
-    {
+    public static void main( String[] args ) {
         MainPanel mainPanel= new MainPanel();
         mainPanel.setVisible(true);
     }
     
-    public  byte[] encode(byte[] message, byte[] key) //throws AESException
-    {
+    public  byte[] encode(byte[] message, byte[] key) { //throws AESException
     	// Nk = wielkosc klucza/4
         Nk = key.length/4;
         
@@ -60,33 +53,32 @@ public class Start
         mainKey = generateKey(key);
         
         //wpisujemy widomosc do tempa i uzupelniamy reszte zerami 
-        for (int i = 0; i < len;i++) 
-        { if(i<message.length) temp[i]=message[i];
-          else temp[i]=0;
+        for (int i = 0; i < len;i++) {
+        	if(i<message.length) 
+        		temp[i]=message[i];
+        	else temp[i]=0;
         }
         
         //dzielimy tempa na bloki, wybierami pierwszy blok. blok wrzucamy w encrypt i potem wrzucamy 
         //na pierwsze 16 miejsc tablicy result. potem tak w kółko az do końca
-        for (int k = 0; k < temp.length;) 
-        {
-            for (int j=0;j<16;j++) block[j]=temp[k++];
+        for (int k = 0; k < temp.length;) {
+            for (int j=0;j<16;j++) 
+            	block[j]=temp[k++];
             //block = encrypt(block);
             System.arraycopy(block, 0, result,k-16, block.length);
 
         }
         return result;
-}
+    }
     
-    public byte[][] generateKey(byte[] key) 
-    {
+    public byte[][] generateKey(byte[] key) {
     	//generujemy 60 32bitowych kluczy jak klucz jest 265 bitowy (klucz moze byc tez 192/128 bitowy)
     	//tutaj uzupelniamy tylko czesc klucza. klucz jest dalej uzupelniany w metodzie encrypt
     	//Nr - ilosc rund
         byte[][] temp = new byte[4 * (Nr+1)][4];
         int i = 0;
         int j =0;
-        while (i < Nk) 
-        {
+        while (i < Nk) {
             temp[i][0] = key[j];
             temp[i][1] = key[j++];
             temp[i][2] = key[j++];
@@ -97,8 +89,7 @@ public class Start
         return temp;
     }
     
-    public  byte[] encrypt(byte[] block) 
-    {
+    public  byte[] encrypt(byte[] block) {
         byte[] tmp = new byte[block.length];
         
         //macierz stanu
@@ -113,8 +104,7 @@ public class Start
         state = addRoundKey(state, mainKey, 0);
         
         //rundy posrednie
-        for (int round = 1; round < Nr; round++) 
-        {
+        for (int round = 1; round < Nr; round++) {
             state = subBytes(state);
             state = shiftRows(state);
             state = mixColumns(state);
@@ -130,66 +120,58 @@ public class Start
         for (int i = 0; i < tmp.length; i++)
             tmp[i] = state[i / 4][i%4];
         return tmp;
-}
+    }
     
-   
-	
-    
-    private byte[][] addRoundKey(byte[][] state, byte[][] w, int round) 
-    {
+    private byte[][] addRoundKey(byte[][] state, byte[][] w, int round) {
     	//tablica 4x4
-        byte[][] tmp = new byte[state.length][state[0].length];
+    	byte[][] tmp = new byte[state.length][state[0].length];
         
-        //bierzemy kolumny w macierzy stanów i robimy XOR z pierwszymy 4 wierszami w mainKey
-        for (int column = 0; column < 4; column++) 
-        {
+        //bierzemy kolumny z macierzy stanów i robimy XOR z pierwszymi 4 wierszami w mainKey
+        for (int column = 0; column < 4; column++) {
             for (int row = 0; row < 4; row++)
                 tmp[row][column] = (byte) (state[row][column] ^ w[round * 4 + column][row]);
         }
         return tmp;
-}
-    private byte[][] subBytes(byte[][] state) 
-    {
+    }
+    
+    private byte[][] subBytes(byte[][] state) {
+    	//tablica 4x4
         byte[][] temp = new byte[state.length][state[0].length];
+        
         for (int row = 0; row < 4; row++)
             for (int column = 0; column < 4; column++)
                 temp[row][column] = (byte) (sbox[(state[row][column] & 0xff)]);
         return temp;
-}
+    }
     
-	private byte[][] shiftRows(byte[][] state) 
-    {
-        byte[] t = new byte[4];
-        for (int r = 1; r < 4; r++) 
-        {
+	private byte[][] shiftRows(byte[][] state) {
+		byte[] t = new byte[4];
+        for (int r = 1; r < 4; r++) {
             for (int c = 0; c < 4; c++)
                 t[c] = state[r][(c + r) % 4];
                 for (int c = 0; c < 4; c++)
                     state[r][c] = t[c];
         }
         return state;
-}
+    }
 	
-	private  byte[][] mixColumns(byte[][] s)
-    {
-      int[] sp = new int[4];
-      byte b02 = (byte)0x02, b03 = (byte)0x03;
-      for (int c = 0; c < 4; c++) 
-      {
+	private  byte[][] mixColumns(byte[][] s) {
+		int[] sp = new int[4];
+		byte b02 = (byte)0x02, b03 = (byte)0x03;
+		for (int c = 0; c < 4; c++) {
          sp[0] = fMul(b02, s[0][c]) ^ fMul(b03, s[1][c]) ^ s[2][c]  ^ s[3][c];
          sp[1] = s[0][c]  ^ fMul(b02, s[1][c]) ^ fMul(b03, s[2][c]) ^ s[3][c];
          sp[2] = s[0][c]  ^ s[1][c]  ^ fMul(b02, s[2][c]) ^ fMul(b03, s[3][c]);
          sp[3] = fMul(b03, s[0][c]) ^ s[1][c]  ^ s[2][c]  ^ fMul(b02, s[3][c]);
-         for (int i = 0; i < 4; i++) s[i][c] = (byte)(sp[i]);
-      }
-      return s;
-}
+         for (int i = 0; i < 4; i++) 
+        	 s[i][c] = (byte)(sp[i]);
+         }
+		return s;
+	}
 	
-	public  byte fMul(byte a, byte b) 
-    {
-        byte aa = a, bb = b, r = 0, t;
-        while (aa != 0) 
-        {
+	public  byte fMul(byte a, byte b) {
+		byte aa = a, bb = b, r = 0, t;
+        while (aa != 0) {
             if ((aa & 1) != 0)
                 r = (byte) (r ^ bb);
             t = (byte) (bb & 0x20);
@@ -199,7 +181,7 @@ public class Start
             aa = (byte) ((aa & 0xff) >> 1);
         }
         return r;
-}
+    }
 	
     
 	private  int[] sbox = { 
