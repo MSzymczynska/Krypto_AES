@@ -172,6 +172,62 @@ public class MainPanel extends JFrame {
         return temp;
     }
     
+	//Algorytm S4.2 wyznaczanie kluczy pośrednich
+	public byte[][] generateSubKeys(byte[] key) {
+		int i=0;
+		byte[][] temp = new byte[4][4*(Nr+1)];
+		byte temporary;
+		
+		//punkt 1 (dla j=0,...,7)
+		for (int row=0; row<4; row++) {
+			for (int column=0; column<8; column++) {
+				temp[row][column] = key[32*column + i];
+				i++;
+			}
+		}
+		
+		//punkt 2 (dla j=8,9,...,(4*(Nr+1))) w przypadku klucza 256-bitowego do 59
+		for(int column=8; column<(4*(Nr+1)); column++) {
+			for(int row=0; row<4; row++) {
+				temp[row][column] = temp[row][column-1];
+			}
+			
+			//(b)
+			if(column%8 == 0) {
+				//(b) i. obrót cykliczny ??
+				temporary=temp[0][column];
+				temp[0][column]=temp[1][column];
+				temp[1][column]=temp[2][column];
+				temp[2][column]=temp[3][column];
+				temp[3][column]=temporary;
+				
+				//(b) ii.
+				temp[0][column]=(byte) sbox2[temp[0][column]>>4][temp[0][column]&0x0f];
+				temp[1][column]=(byte) sbox2[temp[1][column]>>4][temp[1][column]&0x0f];
+				temp[2][column]=(byte) sbox2[temp[2][column]>>4][temp[2][column]&0x0f];
+				temp[3][column]=(byte) sbox2[temp[3][column]>>4][temp[3][column]&0x0f];
+				
+				//(b) iii.
+				temp[0][column] = (byte) (temp[0][column] ^ (01000000 << ((column/8)-1)));
+			} else if(column%8 == 4) {
+				//(c)
+				temp[0][column]=(byte) sbox2[temp[0][column]>>4][temp[0][column]&0x0f];
+				temp[1][column]=(byte) sbox2[temp[1][column]>>4][temp[1][column]&0x0f];
+				temp[2][column]=(byte) sbox2[temp[2][column]>>4][temp[2][column]&0x0f];
+				temp[3][column]=(byte) sbox2[temp[3][column]>>4][temp[3][column]&0x0f];
+			}
+			//(d)
+			temp[0][column]=(byte) (temp[0][column]^temp[0][column-8]);
+			temp[1][column]=(byte) (temp[1][column]^temp[1][column-8]);
+			temp[2][column]=(byte) (temp[2][column]^temp[2][column-8]);
+			temp[3][column]=(byte) (temp[3][column]^temp[3][column-8]);
+		}
+		
+		//teoretycznie na wyjściu powinniśmy mieć tablicę[4][60]
+		//wypełnioną 60 32-bitowymi kluczami pośrednimi
+		return temp;
+	}
+    
     public  byte[] encrypt(byte[] block) {
         byte[] tmp = new byte[16];
         
