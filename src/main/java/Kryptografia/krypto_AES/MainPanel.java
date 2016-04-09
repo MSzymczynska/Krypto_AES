@@ -27,10 +27,12 @@ public class MainPanel extends JFrame {
 
 	private FunctionsAES functions = new FunctionsAES();
 	
-	JTextArea userText = new JTextArea();
+	private JTextArea userText = new JTextArea();
+	private JLabel lblResulText = new JLabel("");
 
 	String text = "";
 	String key = "";
+	byte[] result;
 
 	public MainPanel() {
 
@@ -64,9 +66,7 @@ public class MainPanel extends JFrame {
 		//a przecież nigdzie tego nie sprawdzamy
 		btnZaszyfruj.addActionListener(new ActionListener() {
 			// ---------------szyfrowanie-------------------
-			public void actionPerformed(ActionEvent e) {
-				System.out.println(userText.getText());
-				System.out.println(text);
+			public void actionPerformed(ActionEvent e) {;
 				if (text == "" && userText.getText() == null) {
 					System.out.println("Choose file.");
 					JOptionPane.showMessageDialog(panel, "Brak tekstu do przetworzenia. Wpisz tekst lub wybierz plik.",
@@ -79,7 +79,8 @@ public class MainPanel extends JFrame {
 					// GUI
 					key = "1a25s8fe5dsg65ad";
 					// kodujemy
-				//	functions.encode(text.getBytes(), key.getBytes());
+					result = functions.encode(text.getBytes(), key.getBytes());
+					lblResulText.setText(new String(result));
 				}
 			}
 		});
@@ -102,11 +103,11 @@ public class MainPanel extends JFrame {
 		btnOdszyfruj.setBounds(149, 193, 89, 23);
 		panel.add(btnOdszyfruj);
 
-		JLabel label = new JLabel("...");
-		label.setForeground(Color.BLACK);
-		label.setVerticalAlignment(SwingConstants.TOP);
-		label.setBounds(33, 267, 411, 151);
-		panel.add(label);
+		
+		lblResulText.setForeground(Color.BLACK);
+		lblResulText.setVerticalAlignment(SwingConstants.TOP);
+		lblResulText.setBounds(33, 267, 411, 151);
+		panel.add(lblResulText);
 
 		JButton btnWybierzPlik = new JButton("Wybierz plik");
 		btnWybierzPlik.addActionListener(new ActionListener() {

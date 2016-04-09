@@ -7,8 +7,8 @@ public class FunctionsAES {
 	private  int Nb = 4, Nk, Nr;   
 	private  byte[][] mainKey;
 	
-	public  byte[] encode(byte[] message, byte[] key) { //throws AESException
-       	//Nk = wielkość klucza w bitach / 32 [4: AES-128, 6: AES-192 lub 8: AES-256]
+	public byte[] encode(byte[] message, byte[] key) { //throws AESException
+		//Nk = wielkość klucza w bitach / 32 [4: AES-128, 6: AES-192 lub 8: AES-256]
         Nk = key.length/4; 
         
         //Nr = ilosc rund 
@@ -61,7 +61,7 @@ public class FunctionsAES {
         for (int k = 0; k < temp.length;) {
             for (int j = 0; j < 16; j++) 
             	block[j] = temp[k++];
-            //block = encrypt(block);
+            block = encrypt(block);
             System.arraycopy(block, 0, result, k-16, block.length);
         }
         return result;
