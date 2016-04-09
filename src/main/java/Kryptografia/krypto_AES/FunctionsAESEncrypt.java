@@ -1,6 +1,6 @@
 package Kryptografia.krypto_AES;
 
-public class FunctionsAES {
+public class FunctionsAESEncrypt {
 	//Nb = wielkość bloku w bitach / 32 [zawsze blok ma 128 bitów]
 	//Nk = wielkość klucza w bitach / 32 [4:AES-128, 6:AES-192 lub 8: AES-256]
 	//Nr = liczba rund

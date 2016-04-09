@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.awt.event.ActionEvent;
 import java.awt.Font;
 import javax.swing.SwingConstants;
@@ -25,7 +26,8 @@ import javax.swing.JTextArea;
 
 public class MainPanel extends JFrame {
 
-	private FunctionsAES functions = new FunctionsAES();
+	private FunctionsAESEncrypt functionsEncrypt = new FunctionsAESEncrypt();
+	private FunctionsAESDecrypt functionsDecrypt = new FunctionsAESDecrypt();
 	
 	private JTextArea userText = new JTextArea();
 	private JLabel lblResulText = new JLabel("");
@@ -79,7 +81,7 @@ public class MainPanel extends JFrame {
 					// GUI
 					key = "1a25s8fe5dsg65ad";
 					// kodujemy
-					result = functions.encode(text.getBytes(), key.getBytes());
+					result = functionsEncrypt.encode(text.getBytes(), key.getBytes());
 					lblResulText.setText(new String(result));
 				}
 			}
@@ -96,8 +98,8 @@ public class MainPanel extends JFrame {
 		JButton btnOdszyfruj = new JButton("Odszyfruj");
 		btnOdszyfruj.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-
 				// odszyfrowanie
+				functionsDecrypt.decode(text.getBytes());
 			}
 		});
 		btnOdszyfruj.setBounds(149, 193, 89, 23);
@@ -126,6 +128,22 @@ public class MainPanel extends JFrame {
 		});
 		btnWybierzPlik.setBounds(329, 11, 115, 23);
 		panel.add(btnWybierzPlik);
+		
+		JButton btnZapiszDoPliku = new JButton("Zapisz do pliku");
+		btnZapiszDoPliku.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(lblResulText.getText() == null) {
+					System.out.println("There is no text to save.");
+					JOptionPane.showMessageDialog(panel, "Nie ma tekstu do zapisania.", "Brak tekstu",
+							JOptionPane.ERROR_MESSAGE);
+				} else {
+					System.out.println(lblResulText.getText());
+					saveFile(lblResulText.getText());
+				}
+			}
+		});
+		btnZapiszDoPliku.setBounds(33, 428, 115, 23);
+		panel.add(btnZapiszDoPliku);
 	}
 	
 	private void readFile(String filePath) {
@@ -147,6 +165,18 @@ public class MainPanel extends JFrame {
 		} catch (IOException e) {
 			System.out.println("Error during processing file.");
 			JOptionPane.showMessageDialog(this, "Błąd podczas przetwarzania pliku.", "Błąd",
+					JOptionPane.ERROR_MESSAGE);
+			e.printStackTrace();
+		}
+	}
+	private void saveFile(String message) {
+		try {
+			PrintWriter printWriter = new PrintWriter("wynik.txt");
+			printWriter.print(message);
+			printWriter.close();
+		} catch (FileNotFoundException e) {
+			System.out.println("Error during saving file.");
+			JOptionPane.showMessageDialog(this, "Błąd podczas zapisywania pliku.", "Błąd zapisu",
 					JOptionPane.ERROR_MESSAGE);
 			e.printStackTrace();
 		}
