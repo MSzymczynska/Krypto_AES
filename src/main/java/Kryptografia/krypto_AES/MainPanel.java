@@ -6,6 +6,7 @@ import java.awt.BorderLayout;
 import javax.swing.JTextPane;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JTextField;
@@ -23,6 +24,8 @@ import javax.swing.UIManager;
 
 import java.awt.Color;
 import javax.swing.JTextArea;
+import javax.swing.JRadioButton;
+import javax.swing.JComboBox;
 
 public class MainPanel extends JFrame {
 
@@ -32,15 +35,19 @@ public class MainPanel extends JFrame {
 	private JTextArea userText = new JTextArea();
 	private JLabel lblResulText = new JLabel("");
 	private JTextField txtNazwapliku;
+	private JRadioButton rdbtnWpiszKlucz;
+	private JRadioButton rdbtnWybierzKlucz;
+	private JComboBox comboBoxKeys;
 
 	String text = "";
 	String key = "";
 	byte[] result;
+	private JTextField txtKey;
 
 	public MainPanel() {
 
 		getContentPane().setLayout(null);
-		setSize(500, 500);
+		setSize(500, 555);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		try {
@@ -50,11 +57,11 @@ public class MainPanel extends JFrame {
 		}
 
 		JPanel panel = new JPanel();
-		panel.setBounds(0, 0, 484, 462);
+		panel.setBounds(0, 0, 484, 517);
 		getContentPane().add(panel);
 		panel.setLayout(null);
 
-		userText.setBounds(33, 51, 411, 131);
+		userText.setBounds(33, 51, 411, 117);
 		panel.add(userText);
 
 		JLabel lblWpiszTekstDo = new JLabel("Wpisz tekst do zaszyfrowania lub");
@@ -63,6 +70,7 @@ public class MainPanel extends JFrame {
 		panel.add(lblWpiszTekstDo);
 
 		JButton btnZaszyfruj = new JButton("Zaszyfruj");
+		
 		// TODO Nie kumam jednej rzeczy, a mianowicie:
 		// czemu nie wchodzi mi w tą funkcję jeśli plik nie jest wybrany i nic
 		// nie jest wpisane
@@ -70,7 +78,16 @@ public class MainPanel extends JFrame {
 		btnZaszyfruj.addActionListener(new ActionListener() {
 			// ---------------szyfrowanie-------------------
 			public void actionPerformed(ActionEvent e) {
-				;
+				// if(rdbtnWpiszKlucz.isSelected()) {
+				// checkKey(txtKey.getText());
+				// }
+				// key = txtKey.getText();
+				// }
+				if (rdbtnWybierzKlucz.isSelected())
+					key = String.valueOf(comboBoxKeys.getSelectedItem());
+				else
+					key = txtKey.getText();
+
 				if (text == "" && userText.getText() == null) {
 					System.out.println("Choose file to encrypt or write text.");
 					JOptionPane.showMessageDialog(panel, "Brak tekstu do przetworzenia. Wpisz tekst lub wybierz plik.",
@@ -81,20 +98,22 @@ public class MainPanel extends JFrame {
 
 					// ustawiam jakis klucz na razie tutaj, potem mozemy przez
 					// GUI
-					key = "1a25s8fe5dsg65ad";
+					// key = "1a25s8fe5dsg65ad";
 					// kodujemy
-					result = functionsEncrypt.encode(text.getBytes(), key.getBytes());
-					lblResulText.setText(new String(result));
+					if (checkKey(key)) {
+						result = functionsEncrypt.encode(text.getBytes(), key.getBytes());
+						lblResulText.setText(new String(result));
+					}
 				}
 			}
 		});
 
-		btnZaszyfruj.setBounds(33, 193, 89, 23);
+		btnZaszyfruj.setBounds(33, 241, 89, 23);
 		panel.add(btnZaszyfruj);
 
 		JLabel lblWynik = new JLabel("Wynik:");
 		lblWynik.setFont(new Font("Tahoma", Font.PLAIN, 18));
-		lblWynik.setBounds(33, 233, 142, 23);
+		lblWynik.setBounds(33, 285, 142, 23);
 		panel.add(lblWynik);
 
 		JButton btnOdszyfruj = new JButton("Odszyfruj");
@@ -112,14 +131,14 @@ public class MainPanel extends JFrame {
 				}
 			}
 		});
-		btnOdszyfruj.setBounds(149, 193, 89, 23);
+		btnOdszyfruj.setBounds(149, 241, 89, 23);
 		panel.add(btnOdszyfruj);
 		lblResulText.setBackground(Color.LIGHT_GRAY);
 
 		lblResulText.setForeground(Color.BLACK);
 		lblResulText.setOpaque(true);
 		lblResulText.setVerticalAlignment(SwingConstants.TOP);
-		lblResulText.setBounds(33, 263, 411, 151);
+		lblResulText.setBounds(33, 315, 422, 151);
 		panel.add(lblResulText);
 
 		JButton btnWybierzPlik = new JButton("Wybierz plik");
@@ -153,23 +172,52 @@ public class MainPanel extends JFrame {
 				}
 			}
 		});
-		btnZapiszDoPliku.setBounds(33, 428, 115, 23);
+		btnZapiszDoPliku.setBounds(33, 480, 115, 23);
 		panel.add(btnZapiszDoPliku);
-		
+
 		txtNazwapliku = new JTextField();
 		txtNazwapliku.setText("nazwaPliku");
-		txtNazwapliku.setBounds(158, 425, 103, 29);
+		txtNazwapliku.setBounds(158, 477, 297, 29);
 		panel.add(txtNazwapliku);
 		txtNazwapliku.setColumns(10);
-		
+
 		JButton btnWyczyWynik = new JButton("Wyczyść wynik");
 		btnWyczyWynik.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				lblResulText.setText("");
 			}
 		});
-		btnWyczyWynik.setBounds(345, 233, 129, 23);
+		btnWyczyWynik.setBounds(326, 285, 129, 23);
 		panel.add(btnWyczyWynik);
+
+		rdbtnWpiszKlucz = new JRadioButton("Wpisz klucz");
+		rdbtnWpiszKlucz.setBounds(33, 179, 95, 23);
+		rdbtnWpiszKlucz.setSelected(true);
+		panel.add(rdbtnWpiszKlucz);
+
+		rdbtnWybierzKlucz = new JRadioButton("wybierz z listy");
+		rdbtnWybierzKlucz.setBounds(254, 179, 109, 23);
+		panel.add(rdbtnWybierzKlucz);
+
+		ButtonGroup radioButtonsGroup = new ButtonGroup();
+		radioButtonsGroup.add(rdbtnWpiszKlucz);
+		radioButtonsGroup.add(rdbtnWybierzKlucz);
+
+		txtKey = new JTextField();
+		txtKey.setText("1a25s8fe5dsg65ad");
+		txtKey.setBounds(33, 205, 142, 29);
+		panel.add(txtKey);
+		txtKey.setColumns(10);
+
+		String[] keys = { "4affa3ce5dac65ad", "8a25sa9d534b65ad", "a9e6c54e5dsg65ad", "bb9372ae5dsg65ad" };
+		comboBoxKeys = new JComboBox(keys);
+		comboBoxKeys.setSelectedIndex(0);
+		comboBoxKeys.setBounds(250, 205, 176, 29);
+		panel.add(comboBoxKeys);
+
+		JLabel lblLub = new JLabel("lub");
+		lblLub.setBounds(202, 181, 46, 19);
+		panel.add(lblLub);
 	}
 
 	private void readFile(String filePath) {
@@ -197,7 +245,7 @@ public class MainPanel extends JFrame {
 	private void saveFile(String message) {
 		try {
 			String fileName;
-			if(txtNazwapliku.getText().isEmpty())
+			if (txtNazwapliku.getText().isEmpty())
 				fileName = "wynik";
 			else
 				fileName = txtNazwapliku.getText();
@@ -212,5 +260,23 @@ public class MainPanel extends JFrame {
 					JOptionPane.ERROR_MESSAGE);
 			e.printStackTrace();
 		}
+	}
+
+	// TODO Tu trzeba zmienić, bo klucz nie będzie jednej długości, tylko są 3
+	// różne możliwości
+	private Boolean checkKey(String key) {
+		if (key.length() < 16) {
+			System.out.println("Key is too short.");
+			JOptionPane.showMessageDialog(this, "Podany klucz jest za krótki.", "Za krótki klucz",
+					JOptionPane.ERROR_MESSAGE);
+			return false;
+		}
+		if (key.length() > 16) {
+			System.out.println("Key is too long.");
+			JOptionPane.showMessageDialog(this, "Podany klucz jest za długi.", "Za długi klucz",
+					JOptionPane.ERROR_MESSAGE);
+			return false;
+		}
+		return true;
 	}
 }
