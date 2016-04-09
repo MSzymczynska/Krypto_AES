@@ -47,7 +47,7 @@ public class MainPanel extends JFrame {
 	public MainPanel() {
 
 		getContentPane().setLayout(null);
-		setSize(500, 555);
+		setSize(565, 555);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		try {
@@ -57,11 +57,11 @@ public class MainPanel extends JFrame {
 		}
 
 		JPanel panel = new JPanel();
-		panel.setBounds(0, 0, 484, 517);
+		panel.setBounds(0, 0, 549, 517);
 		getContentPane().add(panel);
 		panel.setLayout(null);
 
-		userText.setBounds(33, 51, 411, 117);
+		userText.setBounds(33, 51, 485, 117);
 		panel.add(userText);
 
 		JLabel lblWpiszTekstDo = new JLabel("Wpisz tekst do zaszyfrowania lub");
@@ -70,37 +70,24 @@ public class MainPanel extends JFrame {
 		panel.add(lblWpiszTekstDo);
 
 		JButton btnZaszyfruj = new JButton("Zaszyfruj");
-		
-		// TODO Nie kumam jednej rzeczy, a mianowicie:
-		// czemu nie wchodzi mi w tą funkcję jeśli plik nie jest wybrany i nic
-		// nie jest wpisane
-		// a przecież nigdzie tego nie sprawdzamy
+
 		btnZaszyfruj.addActionListener(new ActionListener() {
 			// ---------------szyfrowanie-------------------
 			public void actionPerformed(ActionEvent e) {
-				// if(rdbtnWpiszKlucz.isSelected()) {
-				// checkKey(txtKey.getText());
-				// }
-				// key = txtKey.getText();
-				// }
 				if (rdbtnWybierzKlucz.isSelected())
 					key = String.valueOf(comboBoxKeys.getSelectedItem());
 				else
 					key = txtKey.getText();
 
-				if (text == "" && userText.getText() == null) {
+				text = userText.getText();
+				if (text.equals("")) {
 					System.out.println("Choose file to encrypt or write text.");
 					JOptionPane.showMessageDialog(panel, "Brak tekstu do przetworzenia. Wpisz tekst lub wybierz plik.",
 							"Brak tekstu do przetworzenia", JOptionPane.ERROR_MESSAGE);
 				} else {
-					// pobieranie tekstu wprowadzeonego przez uzytkownika
-					text = userText.getText();
-
-					// ustawiam jakis klucz na razie tutaj, potem mozemy przez
-					// GUI
-					// key = "1a25s8fe5dsg65ad";
-					// kodujemy
+					// sprawdzamy, czy klucz jest odpowiedniej długości
 					if (checkKey(key)) {
+						// kodujemy
 						result = functionsEncrypt.encode(text.getBytes(), key.getBytes());
 						lblResulText.setText(new String(result));
 					}
@@ -119,12 +106,12 @@ public class MainPanel extends JFrame {
 		JButton btnOdszyfruj = new JButton("Odszyfruj");
 		btnOdszyfruj.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if (text == "" && userText.getText() == null) {
+				text = userText.getText();
+				if (text.equals("")) {
 					System.out.println("Choose file to decrypt or write message.");
 					JOptionPane.showMessageDialog(panel, "Brak tekstu do przetworzenia. Wpisz tekst lub wybierz plik.",
 							"Brak tekstu do przetworzenia", JOptionPane.ERROR_MESSAGE);
 				} else {
-					text = userText.getText();
 					// odszyfrowanie
 					result = functionsDecrypt.decode(text.getBytes());
 					lblResulText.setText(new String(result));
@@ -138,21 +125,13 @@ public class MainPanel extends JFrame {
 		lblResulText.setForeground(Color.BLACK);
 		lblResulText.setOpaque(true);
 		lblResulText.setVerticalAlignment(SwingConstants.TOP);
-		lblResulText.setBounds(33, 315, 422, 151);
+		lblResulText.setBounds(33, 315, 485, 151);
 		panel.add(lblResulText);
 
 		JButton btnWybierzPlik = new JButton("Wybierz plik");
 		btnWybierzPlik.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				JFileChooser fileChooser = new JFileChooser();
-				fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
-				int result = fileChooser.showDialog(panel, "Wybierz plik");
-				if (result == JFileChooser.APPROVE_OPTION) {
-					File selectedFile = fileChooser.getSelectedFile();
-					System.out.println("Selected file: " + selectedFile.getAbsolutePath());
-					String filePath = String.valueOf(fileChooser.getSelectedFile());
-					readFile(filePath);
-				}
+				openFile();
 			}
 		});
 		btnWybierzPlik.setBounds(329, 11, 115, 23);
@@ -161,15 +140,7 @@ public class MainPanel extends JFrame {
 		JButton btnZapiszDoPliku = new JButton("Zapisz do pliku");
 		btnZapiszDoPliku.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				System.out.println(lblResulText.getText());
-				if (lblResulText.getText() == "") {
-					System.out.println("There is no text to save.");
-					JOptionPane.showMessageDialog(panel, "Nie ma tekstu do zapisania.", "Brak tekstu",
-							JOptionPane.ERROR_MESSAGE);
-				} else {
-					System.out.println(lblResulText.getText());
-					saveFile(lblResulText.getText());
-				}
+				saveFile(lblResulText.getText());
 			}
 		});
 		btnZapiszDoPliku.setBounds(33, 480, 115, 23);
@@ -196,7 +167,7 @@ public class MainPanel extends JFrame {
 		panel.add(rdbtnWpiszKlucz);
 
 		rdbtnWybierzKlucz = new JRadioButton("wybierz z listy");
-		rdbtnWybierzKlucz.setBounds(254, 179, 109, 23);
+		rdbtnWybierzKlucz.setBounds(277, 179, 109, 23);
 		panel.add(rdbtnWybierzKlucz);
 
 		ButtonGroup radioButtonsGroup = new ButtonGroup();
@@ -205,21 +176,34 @@ public class MainPanel extends JFrame {
 
 		txtKey = new JTextField();
 		txtKey.setText("1a25s8fe5dsg65ad");
-		txtKey.setBounds(33, 205, 142, 29);
+		txtKey.setBounds(33, 205, 240, 29);
 		panel.add(txtKey);
 		txtKey.setColumns(10);
 
-		String[] keys = { "4affa3ce5dac65ad", "8a25sa9d534b65ad", "a9e6c54e5dsg65ad", "bb9372ae5dsg65ad" };
+		String[] keys = { "4affa3ce5dac65ad", "8a25sa9d534b65ad", "a9e6c54e5dsg65ad", "2b4a7ee9b8f719a6c73dba18",
+				"bb9372a28a6e9f2e5dsg65ad", "9b2a74f29e65b91a7c294ef8", "5dac65ad2b4a7ee9b8f719a6c73dba18",
+				"bb9372aa9d534b628a6e9f2e5dsg65ad", "c54e5dfa9b2a74f29e65b91a7c294ef8" };
 		comboBoxKeys = new JComboBox(keys);
 		comboBoxKeys.setSelectedIndex(0);
-		comboBoxKeys.setBounds(250, 205, 176, 29);
+		comboBoxKeys.setBounds(277, 205, 262, 29);
 		panel.add(comboBoxKeys);
 
 		JLabel lblLub = new JLabel("lub");
-		lblLub.setBounds(202, 181, 46, 19);
+		lblLub.setBounds(227, 181, 32, 19);
 		panel.add(lblLub);
 	}
 
+	private void openFile() {
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
+		int result = fileChooser.showDialog(this, "Wybierz plik");
+		if (result == JFileChooser.APPROVE_OPTION) {
+			File selectedFile = fileChooser.getSelectedFile();
+			System.out.println("Selected file: " + selectedFile.getAbsolutePath());
+			String filePath = String.valueOf(fileChooser.getSelectedFile());
+			readFile(filePath);
+		}
+	}
 	private void readFile(String filePath) {
 		try {
 			BufferedReader bufferReader = new BufferedReader(new FileReader(filePath));
@@ -243,40 +227,40 @@ public class MainPanel extends JFrame {
 	}
 
 	private void saveFile(String message) {
-		try {
-			String fileName;
-			if (txtNazwapliku.getText().isEmpty())
-				fileName = "wynik";
-			else
-				fileName = txtNazwapliku.getText();
-			PrintWriter printWriter = new PrintWriter(fileName + ".txt");
-			printWriter.print(message);
-			printWriter.close();
-			System.out.println("File saved.");
-			JOptionPane.showMessageDialog(this, "Tekst został zapisany do pliku " + fileName + ".txt");
-		} catch (FileNotFoundException e) {
-			System.out.println("Error during saving file.");
-			JOptionPane.showMessageDialog(this, "Błąd podczas zapisywania pliku.", "Błąd zapisu",
+		System.out.println(lblResulText.getText());
+		if (lblResulText.getText().equals("")) {
+			System.out.println("There is no text to save.");
+			JOptionPane.showMessageDialog(this, "Nie ma tekstu do zapisania.", "Brak tekstu",
 					JOptionPane.ERROR_MESSAGE);
-			e.printStackTrace();
+		} else {
+			try {
+				String fileName;
+				if (txtNazwapliku.getText().isEmpty())
+					fileName = "wynik";
+				else
+					fileName = txtNazwapliku.getText();
+				PrintWriter printWriter = new PrintWriter(fileName + ".txt");
+				printWriter.print(message);
+				printWriter.close();
+				System.out.println("File saved.");
+				JOptionPane.showMessageDialog(this, "Tekst został zapisany do pliku " + fileName + ".txt");
+			} catch (FileNotFoundException e) {
+				System.out.println("Error during saving file.");
+				JOptionPane.showMessageDialog(this, "Błąd podczas zapisywania pliku.", "Błąd zapisu",
+						JOptionPane.ERROR_MESSAGE);
+				e.printStackTrace();
+			}
 		}
 	}
 
-	// TODO Tu trzeba zmienić, bo klucz nie będzie jednej długości, tylko są 3
-	// różne możliwości
 	private Boolean checkKey(String key) {
-		if (key.length() < 16) {
-			System.out.println("Key is too short.");
-			JOptionPane.showMessageDialog(this, "Podany klucz jest za krótki.", "Za krótki klucz",
+		if (key.length() == 16 || key.length() == 24 || key.length() == 32)
+			return true;
+		else {
+			System.out.println("Key must have 16, 24 or 32 chars.");
+			JOptionPane.showMessageDialog(this, "Klucz musi mieć 16, 24 lub 32 znaki.", "Zły klucz",
 					JOptionPane.ERROR_MESSAGE);
 			return false;
 		}
-		if (key.length() > 16) {
-			System.out.println("Key is too long.");
-			JOptionPane.showMessageDialog(this, "Podany klucz jest za długi.", "Za długi klucz",
-					JOptionPane.ERROR_MESSAGE);
-			return false;
-		}
-		return true;
 	}
 }
