@@ -23,6 +23,7 @@ public class MainPanel extends JFrame{
 	
 	private  int Nb = 4, Nk, Nr;   
 	private  byte[][] mainKey; 
+	private  byte[][] Vector; 
 	
 	String text;
 	String key;
@@ -54,17 +55,31 @@ public class MainPanel extends JFrame{
 		lblWpiszTekstDo.setBounds(33, 11, 301, 29);
 		panel.add(lblWpiszTekstDo);
 		
+		JLabel label = new JLabel("...");
+		label.setForeground(Color.BLACK);
+		label.setVerticalAlignment(SwingConstants.TOP);
+		label.setBounds(33, 267, 411, 151);
+		panel.add(label);
+		
 		JButton btnZaszyfruj = new JButton("Zaszyfruj");
 		btnZaszyfruj.addActionListener(new ActionListener() {
 			//---------------szyfrowanie-------------------
 			public void actionPerformed(ActionEvent e) {
-				
+				byte[] result;
+				String encrypted="";
 				//pobieranie tekstu wprowadzeonego przez uzytkownika
 				text=userText.getText();
 				//ustawiam jakis klucz na razie tutaj, potem mozemy przez GUI
 				key="1a25s8fe5dsg65ad";
 				//kodujemy
-				encode(text.getBytes(),key.getBytes() );			
+				result = encode(text.getBytes(),key.getBytes() );
+				
+				for(byte x : result)
+		            encrypted+=((char)x);
+				
+				label.setText(encrypted);
+				System.out.println(encrypted);
+				
 			}
 		});
 		
@@ -86,11 +101,7 @@ public class MainPanel extends JFrame{
 		btnOdszyfruj.setBounds(149, 193, 89, 23);
 		panel.add(btnOdszyfruj);
 		
-		JLabel label = new JLabel("...");
-		label.setForeground(Color.BLACK);
-		label.setVerticalAlignment(SwingConstants.TOP);
-		label.setBounds(33, 267, 411, 151);
-		panel.add(label);
+		
 		
 		
 	}
@@ -128,6 +139,7 @@ public class MainPanel extends JFrame{
         byte[] blok = new byte[16];		
         
         mainKey = generateKey(key);
+        KeyExpansion();
         
         //wpisujemy widomosc do tempa i uzupelniamy reszte zerami 
         for (int i = 0; i < len;i++) 
@@ -135,12 +147,14 @@ public class MainPanel extends JFrame{
           else temp[i]=0;
         }
         
-        //dzielimy tempa na bloki, wybierami pierwszy blok. blok wrzucamy w encrypt i potem wrzucamy 
-        //na pierwsze 16 miejsc tablicy result. potem tak wkółko az do końca
+        //przerzucamy 16 bajtów z tema do bloku. robimy dla tego bloku encrypt, arraycopy 
+        //i potem bierzemy nastepne 16 bajtów tempa i powtarzamy encrypt i arraycopy dla kolejnego bloku
         for (int k = 0; k < temp.length;) 
         {
-            for (int j=0;j<16;j++) blok[j]=temp[k++];
-            //blok = encrypt(blok);
+            for (int j=0;j<16;j++) 
+            	blok[j]=temp[k++];
+            
+            blok = encrypt(blok);
             System.arraycopy(blok, 0, result,k-16, blok.length);
 
         }
@@ -178,7 +192,7 @@ public class MainPanel extends JFrame{
         // po kazdej rundzie powstaje szyfr posredni zwany stanem (state) 
         
         //runda pierwsza inicjalizująca:
-        state = addRoundKey(state, mainKey, 0);
+        state = addRoundKey(state, Vector, 0);
         
         //rundy posrednie
         for (int round = 1; round < Nr; round++) 
@@ -186,13 +200,13 @@ public class MainPanel extends JFrame{
             state = subBytes(state);
             state = shiftRows(state);
             state = mixColumns(state);
-            state = addRoundKey(state, mainKey, round);
+            state = addRoundKey(state, Vector, round);
         }
         
         //runda finałowa
         state = subBytes(state);
         state = shiftRows(state);
-        state = addRoundKey(state, mainKey, Nr);
+        state = addRoundKey(state, Vector, Nr);
         
         
         for (int i = 0; i < tmp.length; i++)
@@ -202,7 +216,7 @@ public class MainPanel extends JFrame{
         
     private byte[][] addRoundKey(byte[][] state, byte[][] w, int round) 
     {
-    	//tablica 16x4
+    	//tablica 4x4
         byte[][] tmp = new byte[state.length][state[0].length];
         for (int c = 0; c < Nb; c++) 
         {
@@ -226,7 +240,7 @@ public class MainPanel extends JFrame{
         byte[] t = new byte[4];
         for (int r = 1; r < 4; r++) 
         {
-            for (int c = 0; c < Nb; c++)
+        	for (int c = 0; c < Nb; c++)
                 t[c] = state[r][(c + r) % Nb];
                 for (int c = 0; c < Nb; c++)
                     state[r][c] = t[c];
@@ -264,6 +278,67 @@ public class MainPanel extends JFrame{
         }
         return r;
     }
+	
+	 private void KeyExpansion()
+     {
+         Vector = new byte[Nb * (Nr + 1)][4];  // 4 kolumny bajtów odpowiadające słowu
+
+         for (int row = 0; row < Nk; row++)
+         {
+             Vector[row][0] = mainKey[row%4][0];
+             Vector[row][1] = mainKey[row%4][1];
+             Vector[row][2] = mainKey[row%4][2];
+             Vector[row][3] = mainKey[row%4][3];
+         }
+
+         byte[] temp = new byte[4];
+
+         for (int row = Nk; row < Nb * (Nr + 1); row++)
+         {
+             temp[0] = Vector[row - 1][ 0]; temp[1] = Vector[row - 1][ 1];
+             temp[2] = Vector[row - 1][ 2]; temp[3] = Vector[row - 1][ 3];
+
+             if (row % Nk == 0)
+             {
+                 temp = SubWord(RotWord(temp));
+
+                 temp[0] = (byte)((int)temp[0] ^ (int)Rcon[row / Nk][ 0]);
+                 temp[1] = (byte)((int)temp[1] ^ (int)Rcon[row / Nk][ 1]);
+                 temp[2] = (byte)((int)temp[2] ^ (int)Rcon[row / Nk][ 2]);
+                 temp[3] = (byte)((int)temp[3] ^ (int)Rcon[row / Nk][ 3]);
+             }
+             else if (Nk > 6 && (row % Nk == 4))
+             {
+                 temp = SubWord(temp);
+             }
+
+             Vector[row][ 0] = (byte)((int)Vector[row - Nk][ 0] ^ (int)temp[0]);
+             Vector[row][ 1] = (byte)((int)Vector[row - Nk][ 1] ^ (int)temp[1]);
+             Vector[row][ 2] = (byte)((int)Vector[row - Nk][ 2] ^ (int)temp[2]);
+             Vector[row][ 3] = (byte)((int)Vector[row - Nk][ 3] ^ (int)temp[3]);
+
+         }
+     }
+	 
+	 private byte[] SubWord(byte[] state)
+     {
+	        
+         byte[] result = new byte[4];
+         for (int row = 0; row < 4; row++){
+        	 result[row]=(byte)(sbox[(state[row] & 0xff)]);
+         }
+         return result;
+     }
+
+     private byte[] RotWord(byte[] word)
+     {
+         byte[] result = new byte[4];
+         result[0] = word[1];
+         result[1] = word[2];
+         result[2] = word[3];
+         result[3] = word[0];
+         return result;
+     }
 	
 	private  int[] sbox = { 0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F,
 			0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76, 0xCA, 0x82,
@@ -314,4 +389,16 @@ public class MainPanel extends JFrame{
 			0x4D, 0xAE, 0x2A, 0xF5, 0xB0, 0xC8, 0xEB, 0xBB, 0x3C, 0x83, 0x53,
 			0x99, 0x61, 0x17, 0x2B, 0x04, 0x7E, 0xBA, 0x77, 0xD6, 0x26, 0xE1,
 			0x69, 0x14, 0x63, 0x55, 0x21, 0x0C, 0x7D };
+	
+	private double [][] Rcon = { {0x00, 0x00, 0x00, 0x00}, 
+            {0x01, 0x00, 0x00, 0x00},
+            {0x02, 0x00, 0x00, 0x00},
+            {0x04, 0x00, 0x00, 0x00},
+            {0x08, 0x00, 0x00, 0x00},
+            {0x10, 0x00, 0x00, 0x00},
+            {0x20, 0x00, 0x00, 0x00},
+            {0x40, 0x00, 0x00, 0x00},
+            {0x80, 0x00, 0x00, 0x00},
+            {0x1b, 0x00, 0x00, 0x00},
+            {0x36, 0x00, 0x00, 0x00} };
 }
